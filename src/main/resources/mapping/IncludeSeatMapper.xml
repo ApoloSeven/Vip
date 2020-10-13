@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.feijian.dao.IncludeSeatMapper">
+    <resultMap id="BaseResultMap" type="com.feijian.model.Seat">
+        <id column="uuid" jdbcType="VARCHAR" property="uuid" />
+        <result column="card_number" jdbcType="VARCHAR" property="cardNumber" />
+        <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+        <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+        <result column="seat_number" jdbcType="VARCHAR" property="seatNumber" />
+    </resultMap>
+    <resultMap id="seatIncludeMap" type="com.feijian.dto.SeatIncludeDto">
+        <result column="id" jdbcType="INTEGER" property="id" />
+        <result column="seat_number" jdbcType="VARCHAR" property="seatNumber" />
+        <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+        <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+        <result column="card_number" jdbcType="VARCHAR" property="cardNumber" />
+        <result column="uuid" jdbcType="VARCHAR" property="uuid" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        uuid, card_number, start_time, end_time, seat_number
+    </sql>
+
+    <select id="findByUuid" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from include_seat
+        where uuid = #{uuid,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findByCardNumber" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from include_seat
+        where card_number = #{cardNumber,jdbcType=VARCHAR} limit 10
+    </select>
+
+    <select id="findBySeatNumber" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from include_seat
+        where seat_number = #{seatNumber,jdbcType=VARCHAR} limit 10
+    </select>
+
+    <update id="updateSeatNumber" parameterType="java.lang.String">
+    update include_seat set seat_number = #{seatNumber,jdbcType=VARCHAR} where uuid = #{uuid,jdbcType=VARCHAR}
+  </update>
+
+
+    <delete id="deleteByCardNumber" parameterType="java.lang.String">
+        delete from include_seat where card_number = #{cardNumber,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteByUuid" parameterType="java.lang.String">
+        delete from include_seat where uuid = #{uuid,jdbcType=VARCHAR}
+    </delete>
+
+
+    <insert id="insert" parameterType="com.feijian.model.Seat">
+        insert into include_seat (uuid, card_number, start_time, end_time, seat_number)
+        values (#{uuid,jdbcType=VARCHAR}, #{cardNumber,jdbcType=VARCHAR},#{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP},
+        #{seatNumber,jdbcType=VARCHAR})
+    </insert>
+
+
+    <!--查找用户的所有记录-->
+    <select id="findAllSeats" resultMap="seatIncludeMap">
+        select t1.id, t1.seat_number, t2.uuid, t2.card_number, t2.start_time, t2.end_time
+        from seat t1 left join include_seat t2 on t1.seat_number = t2.seat_number
+    </select>
+    <select id="countAllSeats" resultType="java.lang.Integer">
+        select count(1) from seat
+    </select>
+
+</mapper>

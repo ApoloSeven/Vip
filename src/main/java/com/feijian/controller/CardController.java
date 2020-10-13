@@ -1,123 +1,281 @@
 package com.feijian.controller;
 
-import com.feijian.dto.UserSearchDTO;
+import com.feijian.dto.*;
 import com.feijian.model.Card;
-import com.feijian.response.PageDataResult;
+import com.feijian.response.ResponseCode;
+import com.feijian.response.ResponseResult;
 import com.feijian.service.CardService;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
-@Controller
+@Controller()
 public class CardController {
 
-    private org.slf4j.Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Resource
+    @Autowired
     private CardService cardService;
+
+    @RequestMapping("/cardView")
+    public String toCardView() {
+        return "cardPage";
+    }
+
+    /**
+     * 根据用户id或者卡号查询卡片信息
+     *
+     * @param cardNumber
+     * @return
+     */
+    @GetMapping("/card")
+    @ResponseBody
+    public ResponseResult queryByUserId(String cardNumber) {
+        Card card = cardService.findByCardNumber(cardNumber);
+        return new ResponseResult(ResponseCode.SUCCESS, card);
+    }
+
 
     /**
      * 会员卡的添加
      *
      * @param card
      */
-    @RequestMapping("/addCard")
-    public void insert(Card card) {
-        cardService.insert(card);
-    }
-
-    /**
-     * 会员信息的修改
-     *
-     * @param card
-     */
-    @RequestMapping("/updateCardById")
-    public void updateCardById(Card card) {
-        cardService.updateCardById(card);
-    }
-
-    /**
-     * 查找所有的客户
-     *
-     * @return
-     */
-    @RequestMapping(value = "/findAll", method = RequestMethod.POST)
+    @PostMapping("/card")
     @ResponseBody
-    public PageDataResult findAll(@RequestParam("pageNum") Integer pageNum,
-                                  @RequestParam("pageSize") Integer pageSize, UserSearchDTO userSearchDTO) {
-        PageDataResult pdr = new PageDataResult();
+    public ResponseResult insert(Card card) {
         try {
-            if (null == pageNum) {
-                pageNum = 1;
-            }
-            if (null == pageSize) {
-                pageSize = 14;
-            }
-            // 获取用户列表
-            pdr = cardService.findAll(userSearchDTO, pageNum, pageSize);
-
+            card.setStatus(CardStatusEnum.INITIAL.name());
+            card.setMainCount(0f);
+            card.setPoints(0f);
+            cardService.insert(card);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("用户列表查询异常！", e);
+            log.error("开卡失败：", e);
+            return new ResponseResult(ResponseCode.ERROR, null);
         }
-        return pdr;
     }
 
     /**
-     * 用户的添加或者修改
+     * 会员卡信息的修改
      *
      * @param card
-     * @return
      */
-    @RequestMapping(value = "/setCard", method = RequestMethod.POST)
+    @PutMapping("/card/{cardNumber}")
     @ResponseBody
-    public Map<String, Object> setCard(Card card, String adminPassword) {
-        logger.info("设置用户:" + card);
-        Map<String, Object> data = new HashMap<>();
-        if (card.getUserId() == null) {
-            data = cardService.addUser(card, adminPassword);
-        } else {
-            data = cardService.updateCard(card, adminPassword);
+    public ResponseResult updateCard(Card card) {
+        try {
+            cardService.updateCard(card);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("修改卡片信息失败：", e);
+            return new ResponseResult(ResponseCode.ERROR, null);
         }
-        return data;
     }
 
     /**
-     * 用户的扣减
-     *
-     * @param card
-     * @return
+     * 会员卡信息的修改
      */
-    @RequestMapping(value = "/downCard", method = RequestMethod.POST)
+    @PostMapping("/card/{cardNumber}/sell")
     @ResponseBody
-    public Map<String, Object> downCard(Card card) {
-        logger.info("用户扣减:" + card);
-        Map<String, Object> data = new HashMap<>();
-        data = cardService.setDown(card);
-        return data;
+    public ResponseResult updateCard(@PathVariable("cardNumber") String cardNumber, @RequestParam String userId) {
+        try {
+            cardService.sellCard(cardNumber, userId);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("转让卡片失败：", e);
+            return new ResponseResult(ResponseCode.ERROR, null);
+        }
     }
 
     /**
-     * 用户得充值操作
+     * 删除会员卡
      *
-     * @param card
+     * @param cardNumber
+     */
+    @DeleteMapping("/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult deleteCard(@PathVariable("cardNumber") String cardNumber) {
+        try {
+            cardService.deleteByCardNumber(cardNumber);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("删除卡片失败：", e);
+            return new ResponseResult(ResponseCode.ERROR, null);
+        }
+    }
+
+    /**
+     * 请假前信息展示
+     *
+     * @param cardNumber
      * @return
      */
-    @RequestMapping(value = "/upCard", method = RequestMethod.POST)
+    @GetMapping("/showpending/card/{cardNumber}")
     @ResponseBody
-    public Map<String, Object> upCard(Card card) {
-        logger.info("用户充值:" + card);
-        Map<String, Object> data = new HashMap<>();
-        data = cardService.upCard(card);
-        return data;
+    public ResponseResult showPending(@PathVariable("cardNumber") String cardNumber) {
+        try {
+            PendingInfoDto dto = cardService.showPending(cardNumber);
+            return new ResponseResult(ResponseCode.SUCCESS, dto);
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("请假失败：", e);
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        }
     }
+
+    /**
+     * 请假
+     *
+     * @param cardNumber
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    @PostMapping("/pending/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult pendingCard(@PathVariable("cardNumber") String cardNumber, @RequestParam String startTime, @RequestParam String endTime) {
+        try {
+            cardService.pending(cardNumber, startTime, endTime);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("请假失败：", e);
+            return new ResponseResult(ResponseCode.ERROR, null);
+        }
+    }
+
+    /**
+     * 打卡
+     *
+     * @param cardNumber
+     * @return
+     */
+    @PostMapping("/consume/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult consume(@PathVariable("cardNumber") String cardNumber) {
+        try {
+            cardService.consume(cardNumber);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("打卡失败：", e);
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 结算前查询消费信息
+     *
+     * @param cardNumber
+     * @return
+     */
+    @PostMapping("/countPay/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult countPay(@PathVariable("cardNumber") String cardNumber) {
+        try {
+            CountPayDto dto = cardService.countPay(cardNumber);
+            return new ResponseResult(ResponseCode.SUCCESS, dto);
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("计算消费金额失败：", e);
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 结算
+     *
+     * @param cardNumber
+     * @return
+     */
+    @PostMapping("/pay/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult pay(@PathVariable("cardNumber") String cardNumber) {
+        try {
+            cardService.pay(cardNumber);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("结算失败:", e);
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 充值
+     *
+     * @param cardNumber
+     * @param dto
+     * @return
+     */
+    @PostMapping("/invest/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult invest(@PathVariable("cardNumber") String cardNumber, InverstDto dto) {
+        try {
+            cardService.invest(dto);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("充值失败：", e);
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 包座前信息展示
+     *
+     * @param cardNumber
+     * @return
+     */
+    @GetMapping("/showseat/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult showIncludeSeat(@PathVariable("cardNumber") String cardNumber) {
+        try {
+            SeatDto dto = cardService.showIncludeSeat(cardNumber);
+            return new ResponseResult(ResponseCode.SUCCESS, dto);
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("充值失败：", e);
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 包座
+     *
+     * @param cardNumber
+     * @return
+     */
+    @PostMapping("/seat/card/{cardNumber}")
+    @ResponseBody
+    public ResponseResult includeSeat(@PathVariable("cardNumber") String cardNumber,@RequestParam String startTime,
+                                      @RequestParam String endTime,@RequestParam String seatNumber,@RequestParam String seatNumberOld) {
+        try {
+            cardService.includeSeat(cardNumber, startTime, endTime, seatNumber, seatNumberOld);
+            return new ResponseResult();
+        } catch (IllegalArgumentException e) {
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        } catch (Exception e) {
+            log.error("充值失败：", e);
+            return new ResponseResult(ResponseCode.ERROR.getCode(), e.getMessage());
+        }
+    }
+
+
 }

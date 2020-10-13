@@ -1,17 +1,23 @@
 package com.feijian.dao;
 
+import com.feijian.dto.UserCardDto;
+import com.feijian.dto.UserCardListSearchDto;
 import com.feijian.model.User;
 
+import java.util.List;
+
 public interface UserMapper {
-    int deleteByPrimaryKey(Integer userId);
+
+    User selectByUserId(Integer userId);
+
+    User selectByPhone(String phone);
+
+    void deleteByUserId(Integer userId);
 
     int insert(User record);
 
-    int insertSelective(User record);
+    void updateByUserIdSelective(User record);
 
-    User selectByPrimaryKey(Integer userId);
+    List<UserCardDto> selectUserCards(UserCardListSearchDto dto);
 
-    int updateByPrimaryKeySelective(User record);
-
-    int updateByPrimaryKey(User record);
 }

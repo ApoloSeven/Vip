@@ -1,132 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.feijian.dao.LogMapper">
-  <resultMap id="BaseResultMap" type="com.feijian.model.Log">
-    <id column="log_id" jdbcType="INTEGER" property="logId" />
-    <result column="log_time" jdbcType="TIMESTAMP" property="logTime" />
-    <result column="user_id" jdbcType="INTEGER" property="userId" />
-    <result column="user_name" jdbcType="VARCHAR" property="userName" />
-    <result column="log_count" jdbcType="INTEGER" property="logCount" />
-    <result column="remark" jdbcType="VARCHAR" property="remark" />
-    <result column="flag" jdbcType="INTEGER" property="flag" />
+  <resultMap id="BaseResultMap" type="com.feijian.model.UserLog">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="card_number" jdbcType="VARCHAR" property="cardNumber" />
+    <result column="operate_type" jdbcType="INTEGER" property="operateType" />
+    <result column="operate_value" jdbcType="FLOAT" property="operateValue" />
+    <result column="operate_time" jdbcType="TIMESTAMP" property="operateTime" />
+    <result column="param" jdbcType="VARCHAR" property="param" />
   </resultMap>
   <sql id="Base_Column_List">
-    log_id, log_time, user_id, user_name, log_count, remark, flag
+    id, phone, card_number, operate_type, operate_value, operate_time, param
   </sql>
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
-    from t_log
-    where log_id = #{logId,jdbcType=INTEGER}
+    from log_info
+    where id = #{id,jdbcType=INTEGER}
   </select>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    delete from t_log
-    where log_id = #{logId,jdbcType=INTEGER}
-  </delete>
-  <insert id="insert" parameterType="com.feijian.model.Log">
-    insert into t_log (log_id, log_time, user_id,
-      user_name, log_count, remark,
-      flag)
-    values (#{logId,jdbcType=INTEGER}, #{logTime,jdbcType=TIMESTAMP}, #{userId,jdbcType=INTEGER},
-      #{userName,jdbcType=VARCHAR}, #{logCount,jdbcType=INTEGER}, #{remark,jdbcType=VARCHAR},
-      #{flag,jdbcType=INTEGER})
+
+  <select id="selectLatestConsume" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from log_info
+    where card_number = #{cardNumber,jdbcType=VARCHAR} and operate_type = 1 order by operate_time desc limit 1;
+  </select>
+
+
+  <insert id="insert" parameterType="com.feijian.model.UserLog">
+    insert into log_info (id, phone, card_number, operate_type, operate_value, operate_time, param)
+    values (#{id,jdbcType=INTEGER}, #{phone,jdbcType=VARCHAR}, #{cardNumber,jdbcType=VARCHAR},
+    #{operateType,jdbcType=INTEGER}, #{operateValue,jdbcType=FLOAT}, #{operateTime,jdbcType=TIMESTAMP},
+    #{param,jdbcType=VARCHAR})
   </insert>
-  <insert id="insertSelective" parameterType="com.feijian.model.Log">
-    insert into t_log
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="logId != null">
-        log_id,
-      </if>
-      <if test="logTime != null">
-        log_time,
-      </if>
-      <if test="userId != null">
-        user_id,
-      </if>
-      <if test="userName != null">
-        user_name,
-      </if>
-      <if test="logCount != null">
-        log_count,
-      </if>
-      <if test="remark != null">
-        remark,
-      </if>
-      <if test="flag != null">
-        flag,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="logId != null">
-        #{logId,jdbcType=INTEGER},
-      </if>
-      <if test="logTime != null">
-        #{logTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="userId != null">
-        #{userId,jdbcType=INTEGER},
-      </if>
-      <if test="userName != null">
-        #{userName,jdbcType=VARCHAR},
-      </if>
-      <if test="logCount != null">
-        #{logCount,jdbcType=INTEGER},
-      </if>
-      <if test="remark != null">
-        #{remark,jdbcType=VARCHAR},
-      </if>
-      <if test="flag != null">
-        #{flag,jdbcType=INTEGER},
-      </if>
-    </trim>
-  </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.feijian.model.Log">
-    update t_log
-    <set>
-      <if test="logTime != null">
-        log_time = #{logTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="userId != null">
-        user_id = #{userId,jdbcType=INTEGER},
-      </if>
-      <if test="userName != null">
-        user_name = #{userName,jdbcType=VARCHAR},
-      </if>
-      <if test="logCount != null">
-        log_count = #{logCount,jdbcType=INTEGER},
-      </if>
-      <if test="remark != null">
-        remark = #{remark,jdbcType=VARCHAR},
-      </if>
-      <if test="flag != null">
-        flag = #{flag,jdbcType=INTEGER},
-      </if>
-    </set>
-    where log_id = #{logId,jdbcType=INTEGER}
-  </update>
-  <update id="updateByPrimaryKey" parameterType="com.feijian.model.Log">
-    update t_log
-    set log_time = #{logTime,jdbcType=TIMESTAMP},
-      user_id = #{userId,jdbcType=INTEGER},
-      user_name = #{userName,jdbcType=VARCHAR},
-      log_count = #{logCount,jdbcType=INTEGER},
-      remark = #{remark,jdbcType=VARCHAR},
-      flag = #{flag,jdbcType=INTEGER}
-    where log_id = #{logId,jdbcType=INTEGER}
+
+  <update id="updateLog" parameterType="com.feijian.model.UserLog">
+    update log_info set operate_type = #{operateType,jdbcType=VARCHAR},operate_time = #{operateTime,jdbcType=TIMESTAMP},
+    operate_value = #{operateValue,jdbcType=FLOAT}, param=#{param,jdbcType=VARCHAR} where id = #{id,jdbcType=INTEGER}
   </update>
 
-  <!--查找所有的用户记录-->
-  <select id="findLog" resultMap="BaseResultMap">
-    select log_id,log_time,user_id,user_name,remark
-    from t_log
+
+  <!--查找用户的所有记录-->
+  <select id="findAllLogs" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from log_info
     <where>
-      <if test="userName != null and userName != '' ">
-        and user_name like '%${userName}%'
+      1 = 1
+      <if test="phone != null and phone != '' ">
+        and phone = '${phone}'
       </if>
-      <if test="flag != null and flag != '' ">
-        and flag = #{flag}
+      <if test="startTime != null and startTime != '' ">
+        and operate_time > '${startTime}'
+      </if>
+      <if test="endTime != null and endTime != '' ">
+        <![CDATA[
+        and operate_time <'${endTime}'
+        ]]>
+      </if>
+      <if test="operateType != null and operateType != '' ">
+        and operate_type = '${operateType}'
       </if>
     </where>
-    ORDER BY log_id DESC
+    ORDER BY id DESC limit ${startIndex},${pageSize}
+  </select>
+  <select id="countAllLogs" resultType="java.lang.Integer">
+    select count(1) from log_info
+    <where>
+      1 = 1
+      <if test="phone != null and phone != '' ">
+        and phone = '${phone}'
+      </if>
+      <if test="startTime != null and startTime != '' ">
+        and operate_time > '${startTime}'
+      </if>
+      <if test="endTime != null and endTime != '' ">
+        <![CDATA[
+        and operate_time < '${endTime}'
+        ]]>
+      </if>
+      <if test="operateType != null and operateType != '' ">
+        and operate_type = '${operateType}'
+      </if>
+    </where>
   </select>
 </mapper>

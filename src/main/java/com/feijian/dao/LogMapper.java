@@ -1,22 +1,24 @@
 package com.feijian.dao;
 
 import com.feijian.dto.LogSearchDTO;
-import com.feijian.model.Log;
+import com.feijian.model.UserLog;
 
 import java.util.List;
+import java.util.Map;
 
 public interface LogMapper {
-    int deleteByPrimaryKey(Integer logId);
 
-    int insert(Log record);
+    UserLog selectByPrimaryKey(Integer logId);
 
-    int insertSelective(Log record);
+    UserLog selectLatestConsume(String cardNumber);
 
-    Log selectByPrimaryKey(Integer logId);
+    int insert(UserLog record);
 
-    int updateByPrimaryKeySelective(Log record);
+    List<UserLog> findAllLogs(LogSearchDTO logSearchDTO);
 
-    int updateByPrimaryKey(Log record);
+    Integer countAllLogs(LogSearchDTO logSearchDTO);
 
-    List<Log> findLog(LogSearchDTO logSearchDTO);
+    void updateLog(UserLog userLog);
+
+
 }

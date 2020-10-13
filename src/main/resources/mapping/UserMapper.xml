@@ -4,67 +4,75 @@
   <resultMap id="BaseResultMap" type="com.feijian.model.User">
     <id column="user_id" jdbcType="INTEGER" property="userId" />
     <result column="user_name" jdbcType="VARCHAR" property="userName" />
-    <result column="password" jdbcType="VARCHAR" property="password" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
   </resultMap>
+  <resultMap id="UserCardList" type="com.feijian.dto.UserCardDto">
+    <id column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="card_number" jdbcType="VARCHAR" property="cardNumber" />
+    <result column="card_type" jdbcType="INTEGER" property="cardType" />
+    <result column="status" jdbcType="VARCHAR" property="cardStatus" />
+    <result column="main_count" jdbcType="FLOAT" property="mainCount" />
+    <result column="includeSeatUuid" jdbcType="FLOAT" property="includeSeatUuid" />
+    <result column="seat_number" jdbcType="VARCHAR" property="seatNumber" />
+    <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+  </resultMap>
   <sql id="Base_Column_List">
-    user_id, user_name, password, phone
+    user_id, user_name, phone
   </sql>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+
+  <!--按主键查找用户-->
+  <select id="selectByUserId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from t_user
+    from user
     where user_id = #{userId,jdbcType=INTEGER}
   </select>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-    delete from t_user
+  <!--按手机号查找用户-->
+  <select id="selectByPhone" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from user
+    where phone = #{phone,jdbcType=VARCHAR}
+  </select>
+  <!-- 查询用户卡片列表 -->
+  <select id="selectUserCards" parameterType="com.feijian.dto.UserCardListSearchDto" resultMap="UserCardList">
+    select t1.user_id, t1.user_name,t1.phone, t2.card_number,t2.card_type,t2.status, t2.main_count, t3.uuid as includeSeatUuid, t3.seat_number,
+    t2.start_time, t2.end_time
+    from user t1 left join card t2 on t1.user_id = t2.user_id
+    left join include_seat t3 on t2.card_number = t3.card_number
+    where 1=1
+    <if test="phone != null and phone != '' ">
+        and t1.phone = '${phone}'
+    </if>
+    <if test="cardNumber != null and cardNumber != '' ">
+      and t2.card_number = '${cardNumber}'
+    </if>
+  </select>
+
+
+  <!--删除用户-->
+  <delete id="deleteByUserId" parameterType="java.lang.Integer">
+    delete from user
     where user_id = #{userId,jdbcType=INTEGER}
   </delete>
+
+
+  <!--新增用户-->
   <insert id="insert" parameterType="com.feijian.model.User">
-    insert into t_user (user_id, user_name, password, 
-      phone)
-    values (#{userId,jdbcType=INTEGER}, #{userName,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, 
-      #{phone,jdbcType=VARCHAR})
+    insert into user (user_id, user_name, phone)
+    values (#{userId,jdbcType=INTEGER}, #{userName,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR})
   </insert>
-  <insert id="insertSelective" parameterType="com.feijian.model.User">
-    insert into t_user
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="userId != null">
-        user_id,
-      </if>
-      <if test="userName != null">
-        user_name,
-      </if>
-      <if test="password != null">
-        password,
-      </if>
-      <if test="phone != null">
-        phone,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="userId != null">
-        #{userId,jdbcType=INTEGER},
-      </if>
-      <if test="userName != null">
-        #{userName,jdbcType=VARCHAR},
-      </if>
-      <if test="password != null">
-        #{password,jdbcType=VARCHAR},
-      </if>
-      <if test="phone != null">
-        #{phone,jdbcType=VARCHAR},
-      </if>
-    </trim>
-  </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.feijian.model.User">
-    update t_user
+
+
+  <!--更新用户-->
+  <update id="updateByUserIdSelective" parameterType="com.feijian.model.User">
+    update user
     <set>
       <if test="userName != null">
         user_name = #{userName,jdbcType=VARCHAR},
-      </if>
-      <if test="password != null">
-        password = #{password,jdbcType=VARCHAR},
       </if>
       <if test="phone != null">
         phone = #{phone,jdbcType=VARCHAR},
@@ -72,17 +80,5 @@
     </set>
     where user_id = #{userId,jdbcType=INTEGER}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.feijian.model.User">
-    update t_user
-    set user_name = #{userName,jdbcType=VARCHAR},
-      password = #{password,jdbcType=VARCHAR},
-      phone = #{phone,jdbcType=VARCHAR}
-    where user_id = #{userId,jdbcType=INTEGER}
-  </update>
-
-  <!--按条件查找用户-->
-<select id="getUserList" resultType="com.feijian.model.User">
-
-</select>
 
 </mapper>

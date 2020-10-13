@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>未来可期</title>
+    <link rel="stylesheet" href="layui/css/layui.css" media="all">
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <!-- <div class="layui-logo">未来可期</div>
+        头部区域（可配合layui已有的水平导航）
+        <ul class="layui-nav layui-layout-left">
+            <li class="layui-nav-item"><a href="">控制台</a></li>
+            <li class="layui-nav-item"><a href="">商品管理</a></li>
+            <li class="layui-nav-item"><a href="">用户</a></li>
+            <li class="layui-nav-item">
+                <a href="javascript:;">其它系统</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">邮件管理</a></dd>
+                    <dd><a href="">消息管理</a></dd>
+                    <dd><a href="">授权管理</a></dd>
+                </dl>
+            </li>
+        </ul>
+        -->
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <a href="javascript:;">
+                    <img src="http://t.cn/RCzsdCq" class="layui-nav-img">
+                    管理员
+                </a>
+                <!-- <dl class="layui-nav-child">
+                    <dd><a href="">基本资料</a></dd>
+                    <dd><a href="">安全设置</a></dd>
+                </dl> -->
+            </li>
+            <li class="layui-nav-item"><a href="">退出</a></li>
+        </ul>
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <!--
+                <li class="layui-nav-item">
+                    <a href="javascript:;">解决方案</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;">列表一</a></dd>
+                        <dd><a href="javascript:;">列表二</a></dd>
+                        <dd><a href="">超链接</a></dd>
+                    </dl>
+                </li> -->
+                <li class="layui-nav-item"><a href="index.html">首页</a></li>
+                <li class="layui-nav-item"><a href="logList.html">日志记录</a></li>
+                <li class="layui-nav-item"><a href="seat.html">座位管理</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body" style="left: 200px;top: 80px">
+        <input type="hidden" id="globleUserId"/>
+        <input type="hidden" id="globleUserName"/>
+        <input type="hidden" id="globleUserPhone"/>
+        <form id="userSearch" class="layui-form layui-form-pane" method="post" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">是否已包座</label>
+                <div class="layui-input-inline">
+                    <select name="includeSeat">
+                        <option value="0">所有</option>
+                        <option value="1">已包座</option>
+                        <option value="2">未包座</option>
+                    </select>
+                </div>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                <button class="layui-btn" lay-submit="" lay-filter="searchSubmit">查找</button>
+
+            </div>
+        </form>
+
+
+        <!-- <button class="layui-btn" onclick="newUser()">增加用户</button>
+        <button class="layui-btn" onclick="newCard()">增加卡片</button> -->
+
+        <table id="seatList" lay-filter="seatTable"></table>
+
+    </div>
+
+
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        版权所有 未来可期 ©2020
+    </div>
+</div>
+<script src="layui/layui.js" charset="utf-8"></script>
+<script src="js/jquery-1.9.1.min.js" charset="utf-8"></script>
+<script>
+    var pageCurr;
+    var form;
+    $(function () {
+        layui.use('table', function () {
+            var table = layui.table;
+            form = layui.form;
+
+            tableIns = table.render({
+                elem: '#seatList',
+                url: '/seats',
+                method: 'get', //默认：get请求
+                cellMinWidth: 80,
+                page: false,
+                response: {
+                    statusName: 'code', //数据状态的字段名称，默认：code
+                    statusCode: 200, //成功的状态码，默认：0
+                    countName: 'totals', //数据总数的字段名称，默认：count
+                    dataName: 'list' //数据列表的字段名称，默认：data
+                },
+                cols: [[
+                    {field: 'seatNumber', title: '座位号', align: 'center'}
+                    , {field: 'uuid', title: '是否已被包座', align: 'center', templet: function (d) {
+                            if(d.uuid != null && d.uuid != '') return '是';
+                            return '否';
+                        }}
+                    , {field: 'cardNumber', title: '卡号', align: 'center'}
+                    , {field: 'startTimeStr', title: '开始时间', align: 'center'}
+                    , {field: 'endTimeStr', title: '结束时间', align: 'center'}
+                    //, {title: '操作', align: 'center', width: "10%", templet: function (d) {
+                            //if(d.uuid == null || d.uuid == '') return "<a class=\"layui-btn layui-btn-xs\" lay-event=\"includeSeat\">包座</a>";
+                            //return "<a class=\"layui-btn layui-btn-xs\" lay-event=\"cancelSeat\">取消包座</a>";
+                        //}
+                    //}
+                ]]
+            });
+
+            //监听工具条
+            table.on('tool(seatTable)', function (obj) {
+                var data = obj.data;
+                if (obj.event === 'includeSeat') {
+                    //includeSeat(data);
+                }
+            });
+
+
+        });
+
+        //搜索框
+        layui.use(['form'], function () {
+            var form = layui.form;
+            form.on('submit(searchSubmit)', function (data) {
+                //重新加载table
+                load(data);
+                return false;
+            });
+        });
+    });
+
+    //包座
+    function includeSeat(data) {
+        layer.confirm('确认结算?', function(index){
+            $.ajax({
+                type: "POST",
+                url: "/pay/card/" + data.cardNumber,
+                success: function (res) {
+                    layer.alert("结算成功", function () {
+                        layer.closeAll();
+                        load(data);
+                    });
+                },
+                error: function () {
+                    layer.alert("操作请求错误，请您稍后再试", function () {
+                        layer.closeAll();
+                    });
+                }
+            });
+            layer.close(index);
+        });
+    }
+
+
+    function load(obj) {
+        //重新加载table
+        tableIns.reload({
+            where: obj.field
+            , page: {
+                curr: pageCurr //从当前页码开始
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

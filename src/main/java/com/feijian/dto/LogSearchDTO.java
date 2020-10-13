@@ -5,7 +5,15 @@ import lombok.Data;
 @Data
 public class LogSearchDTO {
 
-    private String userName;
+    private String phone;
 
-    private Integer flag;
+    private String startTime;
+
+    private String endTime;
+
+    private String operateType;
+
+    private Integer startIndex;
+
+    private Integer pageSize;
 }

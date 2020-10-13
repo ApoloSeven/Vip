@@ -2,14 +2,17 @@ package com.feijian.service.impl;
 
 import com.feijian.dao.LogMapper;
 import com.feijian.dto.LogSearchDTO;
-import com.feijian.model.Log;
+import com.feijian.dto.UserLogDto;
+import com.feijian.model.UserLog;
 import com.feijian.response.PageDataResult;
 import com.feijian.service.LogService;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
+import com.feijian.utils.DateUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -19,15 +22,29 @@ public class LogServiceImpl implements LogService {
     private LogMapper logMapper;
 
     @Override
-    public PageDataResult findLog(LogSearchDTO logSearchDTO, Integer pageNum, Integer pageSize) {
+    public PageDataResult findAllLogs(Integer pageNum, Integer pageSize, LogSearchDTO logSearchDTO) {
         PageDataResult pageDataResult = new PageDataResult();
-        PageHelper.startPage(pageNum, pageSize);
-        List<Log> allLog = logMapper.findLog(logSearchDTO);
-        if (allLog.size() != 0) {
-            PageInfo<Log> pageInfo = new PageInfo<>(allLog);
-            pageDataResult.setList(allLog);
-            pageDataResult.setTotals((int) pageInfo.getTotal());
+        Integer total = logMapper.countAllLogs(logSearchDTO);
+        if (total == null || total == 0) {
+            return pageDataResult;
+        }
+        List<UserLog> onePageLogs = logMapper.findAllLogs(logSearchDTO);
+        if (CollectionUtils.isNotEmpty(onePageLogs)) {
+            List<UserLogDto> dtoList = new ArrayList<>(onePageLogs.size());
+            for (UserLog userLog : onePageLogs) {
+                UserLogDto dto = new UserLogDto();
+                BeanUtils.copyProperties(userLog, dto);
+                dto.setOperateTimeStr(DateUtils.dateToString(userLog.getOperateTime(), DateUtils.FORMAT_ONE));
+                dtoList.add(dto);
+            }
+            pageDataResult.setList(dtoList);
+            pageDataResult.setTotals(total);
         }
         return pageDataResult;
+    }
+
+    @Override
+    public void insert(UserLog userLog) {
+        logMapper.insert(userLog);
     }
 }

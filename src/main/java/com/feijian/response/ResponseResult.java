@@ -1,4 +1,6 @@
 package com.feijian.response;
+import org.apache.commons.lang.StringUtils;
+
 import java.io.Serializable;
 
 /**
@@ -15,14 +17,19 @@ public class ResponseResult implements Serializable{
     private Object obj;
 
     public ResponseResult() {
-        this.code = IStatusMessage.SystemStatus.SUCCESS.getCode();
-        this.message = IStatusMessage.SystemStatus.SUCCESS.getMessage();
+        this.code = ResponseCode.SUCCESS.getCode();
+        this.message = ResponseCode.SUCCESS.getMessage();
     }
 
-    public ResponseResult(IStatusMessage statusMessage){
+    public ResponseResult(String code, String msg){
+        this.code = code;
+        this.message = msg;
+    }
+
+    public ResponseResult(ResponseCode statusMessage, Object data){
         this.code = statusMessage.getCode();
         this.message = statusMessage.getMessage();
-
+        this.obj = data;
     }
 
     public String getCode() {
